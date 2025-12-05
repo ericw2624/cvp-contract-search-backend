@@ -36,17 +36,6 @@ app.get("/health", (req, res) => {
  * POST /sam-search
  * This is a placeholder endpoint for now.
  * Later we’ll plug in real SAM.gov / forecast logic.
- *
- * Example request body:
- * {
- *   "naicsCodes": ["541614", "541611"],
- *   "setAsides": ["SB", "WOSB"],
- *   "dueWithinDays": 30,
- *   "placeOfPerformance": {
- *     "state": "GA",
- *     "city": "Savannah"
- *   }
- * }
  */
 app.post("/sam-search", (req, res) => {
   console.log("Received /sam-search request:", req.body);
@@ -58,8 +47,6 @@ app.post("/sam-search", (req, res) => {
     placeOfPerformance = {}
   } = req.body || {};
 
-  // For now, just echo the query and return mock data
-  // so you can see the shape and test integration.
   const mockResults = [
     {
       id: "SAMPLE-OPP-001",
@@ -104,62 +91,7 @@ app.post("/sam-search", (req, res) => {
   });
 });
 
-// Alias route to handle camelCase path (/samSearch) in case the GPT tool calls that
-app.post("/samSearch", (req, res) => {
-  console.log("Received /samSearch request:", req.body);
-
-  const {
-    naicsCodes = [],
-    setAsides = [],
-    dueWithinDays = 30,
-    placeOfPerformance = {}
-  } = req.body || {};
-
-  const mockResults = [
-    {
-      id: "SAMPLE-OPP-001",
-      title: "Sample Logistics Support Requirement",
-      agency: "Department of Veterans Affairs",
-      naics: "541614",
-      setAside: "SDVOSB",
-      responseDueDate: "2025-12-31",
-      placeOfPerformance: {
-        city: "Atlanta",
-        state: "GA"
-      },
-      noticeType: "Sources Sought",
-      url: "https://sam.gov/opp/SAMPLE-OPP-001"
-    },
-    {
-      id: "SAMPLE-OPP-002",
-      title: "Nationwide Transportation Services",
-      agency: "Defense Logistics Agency",
-      naics: "484121",
-      setAside: "Small Business",
-      responseDueDate: "2026-01-15",
-      placeOfPerformance: {
-        city: "Kansas City",
-        state: "MO"
-      },
-      noticeType: "RFP",
-      url: "https://sam.gov/opp/SAMPLE-OPP-002"
-    }
-  ];
-
-  res.json({
-    ok: true,
-    source: "mock-data",
-    query: {
-      naicsCodes,
-      setAsides,
-      dueWithinDays,
-      placeOfPerformance
-    },
-    results: mockResults
-  });
-});
-
-// Catch-all 404 (optional, for clearer debugging)
+// Catch-all 404 (for debugging)
 app.use((req, res) => {
   res.status(404).json({
     ok: false,
