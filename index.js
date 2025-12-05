@@ -58,11 +58,12 @@ app.post("/sam-search", async (req, res) => {
   console.log("Received /sam-search request:", req.body);
 
   const {
-    naicsCodes = [],
-    setAsides = [],
-    dueWithinDays = 30,
-    placeOfPerformance = {}
-  } = req.body || {};
+  naicsCodes = [],
+  setAsides = [],
+  dueWithinDays = 30,
+  placeOfPerformance = {},
+  agencyFilter // e.g., "Department of Veterans Affairs" or "Defense Logistics Agency"
+} = req.body || {};
 
   // If no API key is configured, fall back to mock data so the GPT doesn’t break.
   if (!SAM_API_KEY) {
@@ -128,6 +129,11 @@ params.set("postedTo", formatDateMMDDYYYY(end));
 // Also filter by response deadline, if supported
 params.set("rdlfrom", formatDateMMDDYYYY(today));
 params.set("rdlto", formatDateMMDDYYYY(end));
+
+    // Optional: filter by organization/agency if provided
+if (agencyFilter) {
+  params.set("organizationName", String(agencyFilter));
+}
 
     // Filter by first NAICS code if provided
     if (Array.isArray(naicsCodes) && naicsCodes.length > 0) {
@@ -224,6 +230,112 @@ params.set("rdlto", formatDateMMDDYYYY(end));
       error: String(err?.message || err)
     });
   }
+});
+
+/**
+ * POST /forecast-search
+ * For now this returns structured mock forecast data from multiple agencies.
+ * Later you can replace the mock array with real scraped/API data
+ * from DHS APFS, VA forecast tools, GSA forecast, etc.
+ */
+app.post("/forecast-search", (req, res) => {
+  console.log("Received /forecast-search request:", req.body);
+
+  const {
+    naicsCodes = [],
+    placeOfPerformance = {},
+    agencyFilter,
+    forecastWithinDays = 365 // look ahead window
+  } = req.body || {};
+
+  // For now, just return some sample structured forecasts
+  const mockForecasts = [
+    {
+      id: "DHS-APFS-001",
+      title: "DHS Logistics Support Services (Nationwide)",
+      agency: "Department of Homeland Security",
+      component: "CBP",
+      naics: "541614",
+      estimatedSolicitationDate: "2026-01-15",
+      estimatedAwardDate: "2026-06-01",
+      placeOfPerformance: {
+        city: "Multiple",
+        state: "Nationwide"
+      },
+      smallBusinessProgram: "Small Business",
+      dollarRange: "$5M - $10M",
+      url: "https://apfs-cloud.dhs.gov/forecast/"
+    },
+    {
+      id: "VA-FORECAST-001",
+      title: "VA Medical Linen & Laundry Services – VISN 7",
+      agency: "Department of Veterans Affairs",
+      component: "NCO 7",
+      naics: "812331",
+      estimatedSolicitationDate: "2025-09-01",
+      estimatedAwardDate: "2026-01-01",
+      placeOfPerformance: {
+        city: "Atlanta",
+        state: "GA"
+      },
+      smallBusinessProgram: "SDVOSB",
+      dollarRange: "$1M - $5M",
+      url: "https://www.va.gov/osdbu/doingbusiness/forecast.asp"
+    },
+    {
+      id: "DLA-FORECAST-001",
+      title: "DLA Nationwide Distribution & Transportation Support",
+      agency: "Defense Logistics Agency",
+      component: "DLA Distribution",
+      naics: "484121",
+      estimatedSolicitationDate: "2025-08-15",
+      estimatedAwardDate: "2026-02-01",
+      placeOfPerformance: {
+        city: "Multiple",
+        state: "Nationwide"
+      },
+      smallBusinessProgram: "Small Business",
+      dollarRange: "$10M - $25M",
+      url: "https://www.dla.mil/SmallBusiness/Forecast/"
+    }
+  ];
+
+  // Simple filter logic (NAICS, agency, state) just so the tool feels real
+  let filtered = mockForecasts;
+
+  if (Array.isArray(naicsCodes) && naicsCodes.length > 0) {
+    filtered = filtered.filter((f) => naicsCodes.includes(f.naics));
+  }
+
+  if (agencyFilter) {
+    const needle = agencyFilter.toLowerCase();
+    filtered = filtered.filter((f) =>
+      f.agency.toLowerCase().includes(needle) ||
+      (f.component && f.component.toLowerCase().includes(needle))
+    );
+  }
+
+  if (placeOfPerformance && placeOfPerformance.state) {
+    const st = placeOfPerformance.state.toUpperCase();
+    filtered = filtered.filter(
+      (f) =>
+        f.placeOfPerformance.state === st ||
+        f.placeOfPerformance.state === "Nationwide"
+    );
+  }
+
+  res.json({
+    ok: true,
+    source: "mock-forecast",
+    query: {
+      naicsCodes,
+      placeOfPerformance,
+      agencyFilter,
+      forecastWithinDays
+    },
+    totalRecords: filtered.length,
+    results: filtered
+  });
 });
 
 // Catch-all 404 (for debugging)
