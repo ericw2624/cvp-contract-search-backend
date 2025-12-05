@@ -37,8 +37,9 @@ app.get("/health", (req, res) => {
  * This is a placeholder endpoint for now.
  * Later we’ll plug in real SAM.gov / forecast logic.
  */
-app.post("/sam-search", (req, res) => {
-  console.log("Received /sam-search request:", req.body);
+// Shared handler for SAM search logic (mock for now)
+function handleSamSearch(req, res) {
+  console.log("Received sam-search request:", req.method, req.path, req.body);
 
   const {
     naicsCodes = [],
@@ -89,7 +90,13 @@ app.post("/sam-search", (req, res) => {
     },
     results: mockResults
   });
-});
+}
+
+// Normal route (single slash)
+app.post("/sam-search", handleSamSearch);
+
+// Extra route to catch the double-slash case coming from the connector
+app.post("//sam-search", handleSamSearch);
 
 // Catch-all 404 (for debugging)
 app.use((req, res) => {
