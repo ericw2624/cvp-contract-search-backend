@@ -118,11 +118,16 @@ app.post("/sam-search", async (req, res) => {
     end.setDate(today.getDate() + (Number(dueWithinDays) || 30));
 
     const params = new URLSearchParams();
-    params.set("api_key", SAM_API_KEY);
-    params.set("limit", "50"); // adjust as needed (max 1000)
-    // Use response deadline dates (rdlfrom/rdlto) as the required date field
-    params.set("rdlfrom", formatDateMMDDYYYY(today));
-    params.set("rdlto", formatDateMMDDYYYY(end));
+params.set("api_key", SAM_API_KEY);
+params.set("limit", "50"); // adjust as needed (max 1000)
+
+// SAM.gov now requires PostedFrom and PostedTo (posting date range)
+params.set("postedFrom", formatDateMMDDYYYY(today));
+params.set("postedTo", formatDateMMDDYYYY(end));
+
+// Also filter by response deadline, if supported
+params.set("rdlfrom", formatDateMMDDYYYY(today));
+params.set("rdlto", formatDateMMDDYYYY(end));
 
     // Filter by first NAICS code if provided
     if (Array.isArray(naicsCodes) && naicsCodes.length > 0) {
