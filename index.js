@@ -49,6 +49,8 @@ app.get("/health", (req, res) => {
  * }
  */
 app.post("/sam-search", (req, res) => {
+  console.log("Received /sam-search request:", req.body);
+
   const {
     naicsCodes = [],
     setAsides = [],
@@ -99,6 +101,16 @@ app.post("/sam-search", (req, res) => {
       placeOfPerformance
     },
     results: mockResults
+  });
+});
+
+// Catch-all 404 (optional, for clearer debugging)
+app.use((req, res) => {
+  res.status(404).json({
+    ok: false,
+    message: "Route not found in backend",
+    method: req.method,
+    path: req.path
   });
 });
 
