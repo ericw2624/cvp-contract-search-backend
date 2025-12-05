@@ -104,6 +104,61 @@ app.post("/sam-search", (req, res) => {
   });
 });
 
+// Alias route to handle camelCase path (/samSearch) in case the GPT tool calls that
+app.post("/samSearch", (req, res) => {
+  console.log("Received /samSearch request:", req.body);
+
+  const {
+    naicsCodes = [],
+    setAsides = [],
+    dueWithinDays = 30,
+    placeOfPerformance = {}
+  } = req.body || {};
+
+  const mockResults = [
+    {
+      id: "SAMPLE-OPP-001",
+      title: "Sample Logistics Support Requirement",
+      agency: "Department of Veterans Affairs",
+      naics: "541614",
+      setAside: "SDVOSB",
+      responseDueDate: "2025-12-31",
+      placeOfPerformance: {
+        city: "Atlanta",
+        state: "GA"
+      },
+      noticeType: "Sources Sought",
+      url: "https://sam.gov/opp/SAMPLE-OPP-001"
+    },
+    {
+      id: "SAMPLE-OPP-002",
+      title: "Nationwide Transportation Services",
+      agency: "Defense Logistics Agency",
+      naics: "484121",
+      setAside: "Small Business",
+      responseDueDate: "2026-01-15",
+      placeOfPerformance: {
+        city: "Kansas City",
+        state: "MO"
+      },
+      noticeType: "RFP",
+      url: "https://sam.gov/opp/SAMPLE-OPP-002"
+    }
+  ];
+
+  res.json({
+    ok: true,
+    source: "mock-data",
+    query: {
+      naicsCodes,
+      setAsides,
+      dueWithinDays,
+      placeOfPerformance
+    },
+    results: mockResults
+  });
+});
+
 // Catch-all 404 (optional, for clearer debugging)
 app.use((req, res) => {
   res.status(404).json({
